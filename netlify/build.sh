@@ -16,6 +16,10 @@ if [ "$CONTEXT" == "deploy-preview" ]; then
     JEKYLL_CONFIG=$JEKYLL_CONFIG,_config_url.yml
 fi
 
-# deploy preview only
+if [ "$SITE" == "archive" ]; then
+    echo "archive: true" >_config_jekyll.yml
+    JEKYLL_CONFIG=$JEKYLL_CONFIG,_config_jekyll.yml
+fi
+
 bundle exec --gemfile ./netlify/Gemfile \
   jekyll build --config $JEKYLL_CONFIG

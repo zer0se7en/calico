@@ -23,3 +23,7 @@ fi
 
 bundle exec --gemfile ./netlify/Gemfile \
   jekyll build --config $JEKYLL_CONFIG
+
+if [ "$SITE" == "latest" ]; then
+    cp netlify/_redirects _site
+fi

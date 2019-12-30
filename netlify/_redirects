@@ -1,0 +1,20 @@
+# master redirect
+/master/* https://master.docs.projectcalico.org/:splat 302
+
+# temporarily redirect latest (v3.11) to root.
+# We don't want google to believe this is permanent because it will soon move to docs-archive.
+/v3.11/* /:splat 301
+
+# docs-archive
+/v3.10/* https://archive.docs.projectcalico.org/v3.10/:splat 302
+/v3.9/* https://archive.docs.projectcalico.org/v3.9/:splat 302
+/v3.8/* https://archive.docs.projectcalico.org/v3.8/:splat 302
+/v3.7/* https://archive.docs.projectcalico.org/v3.7/:splat 302
+/v3.6/* https://archive.docs.projectcalico.org/v3.6/:splat 302
+/v3.5/* https://archive.docs.projectcalico.org/v3.5/:splat 302
+/v3.4/* https://archive.docs.projectcalico.org/v3.4/:splat 302
+/v3.3/* https://archive.docs.projectcalico.org/v3.3/:splat 302
+/v3.2/* https://archive.docs.projectcalico.org/v3.2/:splat 302
+/v3.1/* https://archive.docs.projectcalico.org/v3.1/:splat 302
+/v3.0/* https://archive.docs.projectcalico.org/v3.0/:splat 302
+/v2.6/* https://archive.docs.projectcalico.org/v2.6/:splat 302

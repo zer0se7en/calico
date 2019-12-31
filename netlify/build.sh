@@ -1,28 +1,55 @@
 #!/bin/bash
 set -e
 
-# netlify does not have docker installed, so we will install dependencies using bundle and
-# execute the build ourselves.
+if [ -z "$(which jekyll)" ]; then
+    gem install github-pages
+fi
 
-# install helm and set $PATH to pick it up
-export PATH=$PATH:/opt/build/repo/bin
-make bin/helm
+if [ -z "$(which helm)" ]; then
+    make bin/helm
+    export PATH=$PATH:$(pwd)/bin
+fi
 
-bundle install --gemfile ./netlify/Gemfile
+DESTINATION=$(pwd)/_site
 
 JEKYLL_CONFIG=_config.yml
 if [ "$CONTEXT" == "deploy-preview" ]; then
     echo "url: $DEPLOY_PRIME_URL" >_config_url.yml
-    JEKYLL_CONFIG=$JEKYLL_CONFIG,_config_url.yml
+    JEKYLL_CONFIG=$JEKYLL_CONFIG,$(pwd)/_config_url.yml
 fi
+
+function build() {
+    config=$JEKYLL_CONFIG
+    if [ "$SITE" == "archive" ]; then
+        echo "archive: true" >_config_jekyll.yml
+        config=$JEKYLL_CONFIG,$(pwd)/_config_jekyll.yml
+    fi
+    echo "building site"
+    jekyll build --config $config
+}
+
+function build_release() {
+    echo "building $1"
+    TEMP_DIR=$(mktemp -d)
+    git archive --format=tar $1 | (cd $TEMP_DIR && tar xf -)
+
+    pushd $TEMP_DIR
+    jekyll build --config $JEKYLL_CONFIG --destination $DESTINATION
+    popd
+    # rsync $TEMP_DIR/_site ./_site
+}
+
+
+build
 
 if [ "$SITE" == "archive" ]; then
-    echo "archive: true" >_config_jekyll.yml
-    JEKYLL_CONFIG=$JEKYLL_CONFIG,_config_jekyll.yml
+    grep -oP '^- \K(.*)' _data/archives.yml | xargs -I _ echo release-_ | while read branch; do
+        if [[ "$branch" == release-legacy*  ]]; then
+            branch="release-legacy"
+        fi
+        build_release $branch
+    done
 fi
-
-bundle exec --gemfile ./netlify/Gemfile \
-  jekyll build --config $JEKYLL_CONFIG
 
 if [ "$SITE" == "latest" ]; then
     cp netlify/_redirects _site

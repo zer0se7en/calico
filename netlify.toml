@@ -2,6 +2,9 @@
 [build]
   command = './netlify/build.sh'
 
+[build.environment]
+  RUBY_VERSION = "2.5.4"
+
 [[headers]]
   for = "/*.yaml"
   [headers.values]

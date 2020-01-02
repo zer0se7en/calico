@@ -25,18 +25,20 @@ function build() {
         config=$JEKYLL_CONFIG,$(pwd)/_config_jekyll.yml
     fi
     echo "building site"
-    jekyll build --config $config
+    jekyll build --config $config --incremental
 }
 
 function build_release() {
     echo "building $1"
     TEMP_DIR=$(mktemp -d)
-    git archive --format=tar $1 | (cd $TEMP_DIR && tar xf -)
+    # git archive --format=tar origin/$1 | (cd $TEMP_DIR && tar xf -)
+    git clone --depth=1 https://github.com/projectcalico/calico -b $1 $TEMP_DIR
 
     pushd $TEMP_DIR
-    jekyll build --config $JEKYLL_CONFIG --destination $DESTINATION
+    jekyll build --config $JEKYLL_CONFIG
     popd
-    # rsync $TEMP_DIR/_site ./_site
+
+    rsync -r $TEMP_DIR/_site .
 }
 
 

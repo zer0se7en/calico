@@ -46,7 +46,7 @@ spec:
 | name     | Unique name to describe this resource instance. Required. | Alphanumeric string with optional `.`, `_`, or `-`. | string |
 
 - The resource with the name `default` has a specific meaning - this contains the BGP global default configuration.
-- The resources with the name `node.<nodename>` contain the node-specific overrides, and will be applied to the node `<nodename>`. When deleting a node the BGPConfiguration resource associated with the node will also be deleted.
+- The resources with the name `node.<nodename>` contain the node-specific overrides, and will be applied to the node `<nodename>`. When deleting a node the BGPConfiguration resource associated with the node will also be deleted. Only prefixAdvertisements, listenPort, and logSeverityScreen can be overridden this way.
 
 #### Spec
 
@@ -57,6 +57,7 @@ spec:
 | asNumber | The default local AS Number that {{site.prodname}} should use when speaking with BGP peers. Only valid on the global `default` BGPConfiguration; to set a per-node override, use the `bgp` field on the [Node resource](./node). | A valid AS Number, may be specified in dotted notation. | integer/string | 64512 |
 | serviceClusterIPs | The CIDR blocks for Kubernetes Service Cluster IPs to be advertised over BGP. Only valid on the global `default` BGPConfiguration: will be ignored otherwise. | A list of valid IPv4 or IPv6 CIDR blocks. | List of `cidr: <ip>/<prefix length>` values. | Empty List |
 | serviceExternalIPs | The CIDR blocks for Kubernetes Service External IPs to be advertised over BGP. Kubernetes Service External IPs will only be advertised if they are within one of these blocks. Only valid on the global `default` BGPConfiguration: will be ignored otherwise. | A list of valid IPv4 or IPv6 CIDR blocks. | List of `cidr: <ip>/<prefix length>` values. | Empty List |
+| serviceLoadBalancerIPs | The CIDR blocks for Kubernetes Service status.LoadBalancer IPs to be advertised over BGP. Kubernetes LoadBalancer IPs will only be advertised if they are within one of these blocks. Only valid on the global `default` BGPConfiguration: will be ignored otherwise. | A list of valid IPv4 or IPv6 CIDR blocks. | List of `cidr: <ip>/<prefix length>` values. | Empty List |
 | listenPort | The port where BGP protocol should listen.| A valid port number. | integer | 179 |
 | communities | List of BGP community names and their values, communities are not advertised unless they are used in [prefixAdvertisements](#prefixadvertisements). || List of [communities](#communities) |
 | prefixAdvertisements | List of per-prefix advertisement properties, like BGP communities.|| List of [prefixAdvertisements](#prefixadvertisements) |

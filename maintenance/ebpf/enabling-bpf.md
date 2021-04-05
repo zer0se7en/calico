@@ -131,7 +131,7 @@ This section explains how to make sure your cluster is suitable for eBPF mode.
    none on /sys/fs/bpf type bpf (rw,nosuid,nodev,noexec,relatime,mode=700)
    ```
 
-   If you see no output, then the BPF filesystem is not mounted; consult the documentation for your OS distribution to see how to make sure the file system is mounted at boot in its standard location  /sys/fs/bpf.  This may involve editing `/etc/fstab` or adding a `systemd` unit, depending on your distribution. If the file system is not mounted on the host then eBPF mode will work normally until {{site.prodname}} is restarted, at which point workload netowrking will be disrupted for several seconds.
+   If you see no output, then the BPF filesystem is not mounted; consult the documentation for your OS distribution to see how to make sure the file system is mounted at boot in its standard location  /sys/fs/bpf.  This may involve editing `/etc/fstab` or adding a `systemd` unit, depending on your distribution. If the file system is not mounted on the host then eBPF mode will work normally until {{site.prodname}} is restarted, at which point workload networking will be disrupted for several seconds.
 
 #### Configure {{site.prodname}} to talk directly to the API server
 
@@ -160,14 +160,14 @@ First, make a note of the address of the API server:
 > **Tip**: If your cluster uses a ConfigMap to configure `kube-proxy` you can find the "right" way to reach the API
 > server by examining the config map.  For example:
 > ```
-> $ kubectl get configmap -n kube-system kube-proxy -o jsonpath='{.data.kubeconfig}' | grep server`
+> $ kubectl get configmap -n kube-system kube-proxy -o yaml | grep server`
 >     server: https://d881b853ae312e00302a84f1e346a77.gr7.us-west-2.eks.amazonaws.com
 > ```
 > In this case, the server is `d881b853aea312e00302a84f1e346a77.gr7.us-west-2.eks.amazonaws.com` and the port is
 > 443 (the standard HTTPS port).
 {: .alert .alert-success}
 
-The next step depends on whether you installed {{site.prodname}} using the operator, or a manifest:
+**The next step depends on whether you installed {{site.prodname}} using the operator, or a manifest:**
 
 {% tabs tab-group:grp1 %}
 <label:Operator,active:true>
@@ -304,11 +304,37 @@ kubectl patch networks.operator.openshift.io cluster --type merge -p '{"spec":{"
 
 #### Enable eBPF mode
 
-To enable eBPF mode, change Felix configuration parameter  `BPFEnabled` to `true`.  This can be done with `calicoctl`, as follows:
+**The next step depends on whether you installed {{site.prodname}} using the operator, or a manifest:**
+
+{% tabs tab-group:grp2 %}
+<label:Operator,active:true>
+<%
+
+If you installed {{site.prodname}} using the operator, change the `spec.calicoNetwork.linuxDataplane` parameter in 
+the operator's `Installation` resource to `"BPF"`; you must also clear the `hostPorts` setting because host ports 
+are not supported in BPF mode:
+
+```bash
+kubectl patch installation.operator.tigera.io default --type merge -p '{"spec":{"calicoNetwork":{"linuxDataplane":"BPF", "hostPorts":null}}}'
+```
+
+> **Note**: the operator rolls out the change with a rolling update which means that some nodes will be in eBPF mode
+> before others.  This can disrupt the flow of traffic through node ports.  We plan to improve this in an upcoming release
+> by having the operator do the update in two phases.
+{: .alert .alert-info}
+
+%>
+<label:Manifest>
+<%
+
+If you installed {{site.prodname}} using a manifest, change Felix configuration parameter  `BPFEnabled` to `true`.  This can be done with `calicoctl`, as follows:
 
 ```
 calicoctl patch felixconfiguration default --patch='{"spec": {"bpfEnabled": true}}'
 ```
+
+%>
+{% endtabs %}
 
 Enabling eBPF mode should not disrupt existing connections but existing connections will continue to use the standard 
 Linux datapath. You may wish to restart pods to ensure that they start new connections using the BPF dataplane.  
@@ -335,8 +361,14 @@ Switching external traffic mode can disrupt in-progress connections.
 
 To revert to standard Linux networking:
 
-1. Disable Calico eBPF mode:
+1. (Depending on whether you installed Calico with the operator or with a manifest) reverse the changes to the operator's `Installation` or the `FelixConfiguration` resource:
 
+   ```bash
+   kubectl patch installation.operator.tigera.io default --type merge -p '{"spec":{"calicoNetwork":{"linuxDataplane":"Iptables"}}}'
+   ```
+   
+   or:
+   
    ```
    calicoctl patch felixconfiguration default --patch='{"spec": {"bpfEnabled": false}}'
    ```
